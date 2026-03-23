@@ -1,15 +1,14 @@
 {
   "name": "Sorteio Master Pro",
   "short_name": "Sorteador",
-  "description": "Aplicativo de sorteios aleatórios profissionais",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",
-  "theme_color": "#38bdf8",
+  "theme_color": "#0f172a",
   "icons": [
     {
       "src": "icone.jpeg",
-      "sizes": "500x500",
+      "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any maskable"
     }

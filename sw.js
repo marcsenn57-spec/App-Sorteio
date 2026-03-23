@@ -1,9 +1,10 @@
 const CACHE_NAME = 'sorteio-v1';
 const assets = [
-  './',
-  './index.html'
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./icone.jpeg"
 ];
-
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(assets))
