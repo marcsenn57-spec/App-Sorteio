@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRÉMIO CERTO</title>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<script>
+  // Registro do Service Worker para permitir instalação
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+   </script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --primary: #38bdf8;
+            --secondary: #818cf8;
+            --accent: #10b981;
+        }
+
+        .light-mode {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --primary: #0284c7;
+            --secondary: #4f46e5;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 480px;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .input-box label { display: block; font-size: 12px; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; opacity: 0.7; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border-radius: 10px;
+            border: 2px solid #334155;
+            background: rgba(0,0,0,0.1);
+            color: inherit;
+            text-align: center;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+
+        input:focus { outline: none; border-color: var(--primary); background: rgba(56, 189, 248, 0.05); }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-main {
+            grid-column: span 2;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 10px 15px -3px rgba(56, 189, 248, 0.4);
+        }
+
+        .btn-secondary { background: #334155; color: white; font-size: 13px; }
+        .btn-export { background: var(--accent); color: white; grid-column: span 2; margin-top: 10px; }
+
+        .light-mode .btn-secondary { background: #e2e8f0; color: #1e293b; }
+
+        button:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-2px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #resultado {
+            font-size: 70px;
+            margin: 25px 0;
+            font-weight: 900;
+            min-height: 85px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #historico {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .hist-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 5px 0; display: flex; justify-content: space-between; }
+        .light-mode .hist-item { border-bottom: 1px solid rgba(0,0,0,0.1); }
+
+        .animar { animation: shuffle 0.1s infinite; }
+        @keyframes shuffle { 0% { opacity: 0.5; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body id="body">
+
+<div class="container">
+    <h2 style="margin-top: 0; letter-spacing: -1px;">PRÉMIO CERTO 🎰</h2>
+
+    <div class="input-group">
+        <div class="input-box"><label>Mínimo</label><input type="number" id="inputMin" value="1"></div>
+        <div class="input-box"><label>Máximo</label><input type="number" id="inputMax" value="100"></div>
+        <div class="input-box"><label>Quant.</label><input type="number" id="inputQtd" value="1"></div>
+    </div>
+
+    <button class="btn-main" id="btnSortear" onclick="iniciarSorteio()">
+        <i class="fas fa-bolt"></i> SORTEAR
+    </button>
+
+    <div class="button-grid">
+        <button class="btn-secondary" onclick="toggleTema()"><i class="fas fa-moon"></i> Modo</button>
+        <button class="btn-secondary" onclick="toggleMusica()"><i class="fas fa-music"></i> Som</button>
+        <button class="btn-secondary" onclick="resetar()"><i class="fas fa-trash"></i> Limpar</button>
+        <button class="btn-secondary" onclick="telaCheia()"><i class="fas fa-expand"></i> Tela</button>
+        <button class="btn-secondary btn-export" id="btnExport" onclick="exportarHistorico()" disabled>
+            <i class="fas fa-file-export"></i> EXPORTAR RESULTADOS (.TXT)
+        </button>
+    </div>
+
+    <div id="resultado">--</div>
+    <div id="historico"></div>
+</div>
+
+<audio id="somClick" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="musica" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+
+<script>
+let usados = [];
+let logsParaExportar = [];
+let sorteando = false;
+
+function iniciarSorteio() {
+    if (sorteando) return;
+
+    const min = parseInt(document.getElementById("inputMin").value);
+    const max = parseInt(document.getElementById("inputMax").value);
+    const qtd = parseInt(document.getElementById("inputQtd").value);
+    const resDiv = document.getElementById("resultado");
+    const btn = document.getElementById("btnSortear");
+
+    if (isNaN(min) || isNaN(max) || isNaN(qtd) || min >= max) {
+        alert("Ops! Verifique se os números estão corretos.");
+        return;
+    }
+
+    const disponiveis = [];
+    for (let i = min; i <= max; i++) {
+        if (!usados.includes(i)) disponiveis.push(i);
+    }
+
+    if (disponiveis.length < qtd) {
+        alert("Limite atingido! Não há números únicos suficientes.");
+        return;
+    }
+
+    sorteando = true;
+    btn.disabled = true;
+    resDiv.classList.add("animar");
+    
+    let tempoShuffle = setInterval(() => {
+        resDiv.innerText = Math.floor(Math.random() * (max - min + 1)) + min;
+        document.getElementById("somClick").cloneNode(true).play();
+    }, 80);
+
+    setTimeout(() => {
+        clearInterval(tempoShuffle);
+        resDiv.classList.remove("animar");
+        
+        // Algoritmo Fisher-Yates
+        for (let i = disponiveis.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [disponiveis[i], disponiveis[j]] = [disponiveis[j], disponiveis[i]];
+        }
+
+        const sorteados = disponiveis.slice(0, qtd).sort((a,b) => a - b);
+        usados.push(...sorteados);
+        
+        resDiv.innerText = sorteados.join(", ");
+        
+        const agora = new Date().toLocaleTimeString();
+        const entry = `Sorteio [${agora}]: ${sorteados.join(", ")}`;
+        logsParaExportar.push(entry);
+
+        document.getElementById("historico").innerHTML = 
+            `<div class="hist-item"><span>${sorteados.join(", ")}</span> <small>${agora}</small></div>` + 
+            document.getElementById("historico").innerHTML;
+        
+        document.getElementById("btnExport").disabled = false;
+
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        
+        const utterance = new SpeechSynthesisUtterance(" Número Sorteado " + sorteados.join(", "));
+        utterance.lang = "pt-BR";
+        window.speechSynthesis.speak(utterance);
+        
+        sorteando = false;
+        btn.disabled = false;
+    }, 1800);
+}
+
+function exportarHistorico() {
+    const conteudo = "HISTÓRICO DE SORTEIO\n" + 
+                     "Gerado em: " + new Date().toLocaleString() + "\n" +
+                     "----------------------------\n" + 
+                     logsParaExportar.join("\n");
+                     
+    const blob = new Blob([conteudo], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "resultados_sorteio.txt";
+    link.click();
+}
+
+function resetar() {
+    if(confirm("Deseja mesmo limpar tudo?")) {
+        usados = [];
+        logsParaExportar = [];
+        document.getElementById("resultado").innerText = "--";
+        document.getElementById("historico").innerHTML = "";
+        document.getElementById("btnExport").disabled = true;
+    }
+}
+
+function toggleTema() { document.body.classList.toggle("light-mode"); }
+function toggleMusica() { const m = document.getElementById("musica"); m.paused ? m.play() : m.pause(); }
+function telaCheia() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+}
+</script>
+</body>
+</html>
